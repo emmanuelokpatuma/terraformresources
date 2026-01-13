@@ -24,10 +24,47 @@ provider "azurerm" {
 module "storage" {
   source         = "./modules/storage"
   storage_name   = "eostorage${terraform.workspace}"  
-  resource_group = "azure_assignment"   # Same RG for all resources
-  location       = "northeurope"
+  resource_group = data.azurerm_resource_group.existing.name   # Use data source for consistency
+  location       = var.location
 }
 
-resource "azurerm_resource_group" "imported_rg" {
-  # No arguments needed here, just declare the resource to import into
+
+# ----------------------------
+# Task 4: Use existing resource group via data source
+# ----------------------------
+data "azurerm_resource_group" "existing" {
+  name = "azure_assignment"   # your RG where SP has access
+}
+
+
+
+# ----------------------------
+# Task 3: Dynamic storage accounts using count
+# ----------------------------
+resource "azurerm_storage_account" "loop_storage" {
+  count                     = length(var.storage_names)
+  name                      = var.storage_names[count.index]   # storage name from variable list
+  resource_group_name       = data.azurerm_resource_group.existing.name
+  location                  = var.location
+  account_tier              = "Standard"
+  account_replication_type  = "LRS"
+
+  tags = {
+    environment = "dev"
+  }
+}
+
+
+# Using for_each
+resource "azurerm_storage_account" "for_each_storage" {
+  for_each                  = var.storages
+  name                      = each.key
+  resource_group_name       = data.azurerm_resource_group.existing.name
+  location                  = var.location
+  account_tier              = "Standard"
+  account_replication_type  = each.value
+
+  tags = {
+    environment = "dev"
+  }
 }
