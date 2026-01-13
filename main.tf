@@ -27,3 +27,7 @@ module "storage" {
   resource_group = "azure_assignment"   # Same RG for all resources
   location       = "northeurope"
 }
+
+resource "azurerm_resource_group" "imported_rg" {
+  # No arguments needed here, just declare the resource to import into
+}
